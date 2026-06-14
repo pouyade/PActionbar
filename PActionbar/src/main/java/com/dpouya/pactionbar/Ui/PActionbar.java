@@ -27,6 +27,7 @@ import com.dpouya.pactionbar.Ui.Cell.PActionbarButtonListCell;
 import com.dpouya.pactionbar.helper.AndroidUtilities;
 import com.dpouya.pactionbar.helper.ColorUtilies;
 import com.dpouya.pactionbar.helper.LayoutUtilities;
+import com.dpouya.pactionbar.helper.LocaleUtilities;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.List;
@@ -164,6 +165,26 @@ public class PActionbar extends FrameLayout {
         recreateLayout();
         tabLayout.setOnTabSelectedListener(tablistener);
     }
+    public void setupTabs(List<String> tabs){
+        tabLayout.setVisibility(VISIBLE);
+        tabLayout.removeAllTabs();
+        for (int i = 0; i < tabs.size(); i++) {
+            TabLayout.Tab tab = tabLayout.newTab();
+            tab.setText(tabs.get(i));
+            tabLayout.addTab(tab);
+        }
+        changeTabsFont(tabLayout);
+        recreateLayout();
+    }
+    public void setupTabs(ViewPager pager){
+        tabLayout.setVisibility(VISIBLE);
+        tabLayout.removeAllTabs();
+        tabLayout.setupWithViewPager(pager);
+        changeTabsFont(tabLayout);
+        recreateLayout();
+    }
+    /** @deprecated Use {@link #setupTabs(List)} or {@link #setupTabs(ViewPager)} instead. */
+    @Deprecated
     public void setupTabs(List<String> tabs, ViewPager pager){
         tabLayout.setVisibility(VISIBLE);
         tabLayout.removeAllTabs();
@@ -178,6 +199,12 @@ public class PActionbar extends FrameLayout {
         }
         changeTabsFont(tabLayout);
         recreateLayout();
+    }
+    public void setCenteredText(String text){
+        txtCenterTitle.setVisibility(VISIBLE);
+        txtCenterTitle.setText(text);
+        txtTitle.setVisibility(GONE);
+        txtSubTitle.setVisibility(GONE);
     }
     public void setCenteredText(String text,Typeface font,int sizeSp){
         txtCenterTitle.setVisibility(VISIBLE);
@@ -202,13 +229,7 @@ public class PActionbar extends FrameLayout {
     private void init() {
         instance = this;
         getDefaults();
-        if(backGroundColor==0){
-            this.setBackgroundColor(primaryColor);
-        }else {
-            this.setBackgroundColor(backGroundColor);
-        }
-
-
+        isRTL = LocaleUtilities.isRTL(getContext());
 
         imgIcon=new ImageView(getContext());
         imgIcon.setBackgroundResource(riplebackgroundeffectResourse);
@@ -297,7 +318,6 @@ public class PActionbar extends FrameLayout {
 
         tabLayout=new TabLayout(getContext());
         tabLayout.setVisibility(GONE);
-        tabLayout.setTabGravity((isRTL?Gravity.RIGHT:Gravity.LEFT));
         tabLayout.setTabMode(TabLayout.MODE_FIXED);
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
         tabLayout.setSelectedTabIndicatorColor(ForeGroundColor);
@@ -313,6 +333,7 @@ public class PActionbar extends FrameLayout {
             line.setBackgroundColor(0xbbcccccc);
             addView(line, LayoutUtilities.createFrame(LayoutUtilities.MATCH_PARENT, 1, Gravity.BOTTOM));
         }
+        this.updateColors();
 
         setLayoutParams(LayoutUtilities.createFrame(LayoutUtilities.MATCH_PARENT,mActionBarSize));
     }
@@ -371,9 +392,11 @@ public class PActionbar extends FrameLayout {
         int widthpx = txtTitle.getMeasuredWidth();
         int titlewidth=AndroidUtilities.pxtodp(getContext(),widthpx);
 
-        AndroidUtilities.ChangeGravitiy(tabLayout,(isRTL?Gravity.LEFT:Gravity.RIGHT));
-        tabLayout.setTabGravity(isRTL?Gravity.RIGHT:Gravity.LEFT);
-        tabLayout.setLayoutParams(LayoutUtilities.createFrame(LayoutUtilities.MATCH_PARENT,mActionBarSize,Gravity.TOP|(isRTL?Gravity.LEFT:Gravity.RIGHT)));
+        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+        int rightMargin = isRTL ? (showBackButton ? mActionBarSize + 5 : 0) : 0;
+        int leftMargin = !isRTL ? (showBackButton ? mActionBarSize + 5 : 0) : 0;
+        tabLayout.setLayoutParams(LayoutUtilities.createFrame(LayoutUtilities.MATCH_PARENT, mActionBarSize,
+                Gravity.TOP | (isRTL ? Gravity.LEFT : Gravity.RIGHT), leftMargin, 0, rightMargin, 0));
 
 //        if(isRTL) {
 //            AndroidUtilities.ChangeMarginRight(txtSearch, eshowicon ? 50 : 0);
@@ -505,6 +528,25 @@ public class PActionbar extends FrameLayout {
     public void setSubTitleColor(int subTitlecolor) {
         this.subTitlecolor = subTitlecolor;
         txtSubTitle.setTextColor(subTitlecolor);
+    }
+
+    public void updateColors() {
+        if (backGroundColor != 0) {
+            setBackgroundColor(backGroundColor);
+        } else {
+            setBackgroundColor(primaryColor);
+        }
+        TypedValue typedValue = new TypedValue();
+        if (getContext().getTheme().resolveAttribute(android.R.attr.textColorPrimary, typedValue, true)) {
+            int textColor = typedValue.data;
+            setTitleColor(textColor);
+            setForeGroundColor(textColor);
+        }
+    }
+
+    public void hideTitle() {
+        setTitle("");
+        setSubTitle("");
     }
 }
 
